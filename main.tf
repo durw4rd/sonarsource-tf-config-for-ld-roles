@@ -19,15 +19,72 @@ variable "launchdarkly_access_token" {
   description = "LaunchDarkly access token"
 }
 
-resource "launchdarkly_custom_role" "old_mutual_devs_example_tf" {
-  key               = "old-mutual-devs-example-policy"
-  name              = "Old Mutual: Devs Example Policy"
-  description       = "Custom role for developers. Based on a restricted built-in Writer role with write access limited to 'dev' and 'int' environment resources."
+variable "squad_names" {
+  type    = list(string)
+  default = ["Integration", "Billing", "Identity", "Experience", "Dev_Workflow", "Enterprise", "Reporting", "Platform"] 
+}
+
+resource "launchdarkly_custom_role" "squad_roles" {
+  for_each = toset(var.squad_names)
+
+  key         = "${each.key}-squad-role"
+  name        = "${each.key} squad role"
+  description = "Role for the ${each.key} squad"
   base_permissions  = "reader"
 
   policy_statements {
     resources = [
       "application/*"
+    ]
+    actions = [
+      "*"
+    ]
+    effect = "allow"
+  }
+
+  policy_statements {
+    resources = [
+      "code-reference-repository/*"
+    ]
+    actions = [
+      "*"
+    ]
+    effect = "allow"
+  }
+
+  policy_statements {
+    resources = [
+      "integration/*"
+    ]
+    actions = [
+      "*"
+    ]
+    effect = "allow"
+  }
+
+  policy_statements {
+    resources = [
+      "proj/*:env/*:destination/*"
+    ]
+    actions = [
+      "*"
+    ]
+    effect = "allow"
+  }
+
+  policy_statements {
+    resources = [
+      "service-token/*"
+    ]
+    actions = [
+      "*"
+    ]
+    effect = "allow"
+  }
+
+  policy_statements {
+    resources = [
+      "proj/sonarcloud:context-kind/*"
     ]
     actions = [
       "*"
@@ -47,8 +104,17 @@ resource "launchdarkly_custom_role" "old_mutual_devs_example_tf" {
 
   policy_statements {
     resources = [
-      "proj/*:env/dev:experiment/*",
-      "proj/*:env/int:experiment/*"
+      "proj/sonarcloud:env/*"
+    ]
+    actions = [
+      "viewSdkKey"
+    ]
+    effect = "allow"
+  }
+
+  policy_statements {
+    resources = [
+      "proj/sonarcloud:env/*:experiment/*",
     ]
     actions = [
       "*"
@@ -58,8 +124,7 @@ resource "launchdarkly_custom_role" "old_mutual_devs_example_tf" {
 
   policy_statements {
     resources = [
-      "proj/*:env/dev:holdout/*",
-      "proj/*:env/int:holdout/*"
+      "proj/sonarcloud:env/*:holdout/*",
     ]
     actions = [
       "*"
@@ -69,7 +134,7 @@ resource "launchdarkly_custom_role" "old_mutual_devs_example_tf" {
 
   policy_statements {
     resources = [
-      "proj/*:layer/*"
+      "proj/sonarcloud:layer/*"
     ]
     actions = [
       "*"
@@ -79,8 +144,7 @@ resource "launchdarkly_custom_role" "old_mutual_devs_example_tf" {
 
   policy_statements {
     resources = [
-      "proj/*:env/dev:flag/*",
-      "proj/*:env/int:flag/*"
+      "proj/sonarcloud:env/*:flag/${each.key}-*",
     ]
     actions = [
       "*"
@@ -90,8 +154,17 @@ resource "launchdarkly_custom_role" "old_mutual_devs_example_tf" {
 
   policy_statements {
     resources = [
-      "proj/*:env/dev:segment/*",
-      "proj/*:env/int:segment/*"
+      "proj/*:env/*:flag/*",
+    ]
+    actions = [
+      "bypassRequiredApproval"
+    ]
+    effect = "deny"
+  }
+
+  policy_statements {
+    resources = [
+      "proj/sonarcloud:env/*:segment/*",
     ]
     actions = [
       "*"
@@ -101,7 +174,7 @@ resource "launchdarkly_custom_role" "old_mutual_devs_example_tf" {
 
   policy_statements {
     resources = [
-      "proj/*:metric/*"
+      "proj/sonarcloud:metric/*"
     ]
     actions = [
       "*"
@@ -111,7 +184,7 @@ resource "launchdarkly_custom_role" "old_mutual_devs_example_tf" {
 
   policy_statements {
     resources = [
-      "proj/*:metric-group/*"
+      "proj/sonarcloud:metric-group/*"
     ]
     actions = [
       "*"
@@ -131,6 +204,16 @@ resource "launchdarkly_custom_role" "old_mutual_devs_example_tf" {
 
   policy_statements {
     resources = [
+      "proj/sonarcloud:release-pipeline/*"
+    ]
+    actions = [
+      "*"
+    ]
+    effect = "allow"
+  }
+
+  policy_statements {
+    resources = [
       "webhook/*"
     ]
     actions = [
@@ -140,12 +223,15 @@ resource "launchdarkly_custom_role" "old_mutual_devs_example_tf" {
   }
 }
 
-resource "launchdarkly_team" "old_mutual_developers" {
-  key         = "old-mutual-devs"
-  name        = "Old Mutual: Developers"
-  description = "Development team"
+resource "launchdarkly_team" "squad_teams" {
+  for_each = toset(var.squad_names)
+
+  key         = "${each.key}-squad-team"
+  name        = "${each.key} squad team"
+  description = "Team for ${each.key} squad"
+
   custom_role_keys = [
-    "old-mutual-devs-example-policy"
+    "${each.key}-role"
   ]
 
   # ignore changes to team membership to avoid overwriting IDP assignments

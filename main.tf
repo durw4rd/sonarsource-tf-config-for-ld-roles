@@ -21,7 +21,7 @@ variable "launchdarkly_access_token" {
 
 variable "squad_names" {
   type    = list(string)
-  default = ["Integration", "Billing", "Identity", "Experience", "Dev_Workflow", "Enterprise", "Reporting", "Platform"] 
+  default = ["integration", "billing", "identity", "experience", "dev-workflow", "enterprise", "reporting", "platform"] 
 }
 
 resource "launchdarkly_custom_role" "squad_roles" {
@@ -64,7 +64,8 @@ resource "launchdarkly_custom_role" "squad_roles" {
 
   policy_statements {
     resources = [
-      "proj/*:env/*:destination/*"
+      "proj/sonarcloud:env/*:destination/*",
+      "proj/sandbox:env/*:destination/*"
     ]
     actions = [
       "*"
@@ -84,7 +85,8 @@ resource "launchdarkly_custom_role" "squad_roles" {
 
   policy_statements {
     resources = [
-      "proj/sonarcloud:context-kind/*"
+      "proj/sonarcloud:context-kind/*",
+      "proj/sandbox:context-kind/*"
     ]
     actions = [
       "*"
@@ -104,6 +106,21 @@ resource "launchdarkly_custom_role" "squad_roles" {
 
   policy_statements {
     resources = [
+      "proj/sonarcloud",
+      "proj/sandbox"
+    ]
+    actions = [
+      "updateDefaultClientSideAvailability", 
+      "updateIncludeInSnippetByDefault",
+      "updateProjectFlagDefaults",
+      "updateTags",
+      "updateDefaultReleasePipeline"
+    ]
+    effect = "allow"
+  }
+
+  policy_statements {
+    resources = [
       "proj/sonarcloud:env/*"
     ]
     actions = [
@@ -114,7 +131,18 @@ resource "launchdarkly_custom_role" "squad_roles" {
 
   policy_statements {
     resources = [
+      "proj/sandbox:env/*"
+    ]
+    actions = [
+      "*"
+    ]
+    effect = "allow"
+  }
+
+  policy_statements {
+    resources = [
       "proj/sonarcloud:env/*:experiment/*",
+      "proj/sandbox:env/*:experiment/*"
     ]
     actions = [
       "*"
@@ -125,6 +153,7 @@ resource "launchdarkly_custom_role" "squad_roles" {
   policy_statements {
     resources = [
       "proj/sonarcloud:env/*:holdout/*",
+      "proj/sandbox:env/*:holdout/*",
     ]
     actions = [
       "*"
@@ -134,7 +163,8 @@ resource "launchdarkly_custom_role" "squad_roles" {
 
   policy_statements {
     resources = [
-      "proj/sonarcloud:layer/*"
+      "proj/sonarcloud:layer/*",
+      "proj/sandbox:layer/*"
     ]
     actions = [
       "*"
@@ -145,6 +175,7 @@ resource "launchdarkly_custom_role" "squad_roles" {
   policy_statements {
     resources = [
       "proj/sonarcloud:env/*:flag/${each.key}-*",
+      "proj/sandbox:env/*:flag/*",
     ]
     actions = [
       "*"
@@ -165,6 +196,7 @@ resource "launchdarkly_custom_role" "squad_roles" {
   policy_statements {
     resources = [
       "proj/sonarcloud:env/*:segment/*",
+      "proj/sandbox:env/*:segment/*"
     ]
     actions = [
       "*"
@@ -174,7 +206,8 @@ resource "launchdarkly_custom_role" "squad_roles" {
 
   policy_statements {
     resources = [
-      "proj/sonarcloud:metric/*"
+      "proj/sonarcloud:metric/*",
+      "proj/sandbox:metric/*"
     ]
     actions = [
       "*"
@@ -184,7 +217,8 @@ resource "launchdarkly_custom_role" "squad_roles" {
 
   policy_statements {
     resources = [
-      "proj/sonarcloud:metric-group/*"
+      "proj/sonarcloud:metric-group/*",
+      "proj/sandbox:metric-group/*"
     ]
     actions = [
       "*"
@@ -204,7 +238,8 @@ resource "launchdarkly_custom_role" "squad_roles" {
 
   policy_statements {
     resources = [
-      "proj/sonarcloud:release-pipeline/*"
+      "proj/sonarcloud:release-pipeline/*",
+      "proj/sandbox:release-pipeline/*"
     ]
     actions = [
       "*"
@@ -231,7 +266,7 @@ resource "launchdarkly_team" "squad_teams" {
   description = "Team for ${each.key} squad"
 
   custom_role_keys = [
-    "${each.key}-role"
+    "${each.key}-squad-role"
   ]
 
   # ignore changes to team membership to avoid overwriting IDP assignments
